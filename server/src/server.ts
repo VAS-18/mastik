@@ -15,10 +15,11 @@ connection_db();
 //api routes
 import authRouter from "./routes/auth.routes";
 import userRouter from "./routes/user.routes";
+import metadataRouter from "./routes/metadata.routes";
 
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/user", userRouter);
-
+app.use("/api/v1/metadata", metadataRouter);
 
 //server start
 const port = process.env.PORT;
