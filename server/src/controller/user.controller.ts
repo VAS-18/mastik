@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import User from "../models/user.model";
+import Content, { IContent } from "../models/content.model";
+import { TContentType } from "../types/types";
+import { Types } from "mongoose";
 
+//get user details (public)
 export const getUserInfo = async (req: Request, res: Response) => {
   const { username } = req.body;
 
@@ -26,19 +30,163 @@ export const getUserInfo = async (req: Request, res: Response) => {
   });
 };
 
-
+//get user details
 export const getMe = async (req: Request, res: Response) => {
   if (!req.user) {
-    return res.status(401).json({ message: 'Not authorized' });
+    return res.status(401).json({ message: "Not authorized" });
   }
 
   try {
-    const user = await User.findById(req.user.id).select('-password');
+    const user = await User.findById(req.user.id).select("-password");
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
     res.status(200).json(user);
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+//User Actions: Adding, Deleting, Share etc
+
+//adding content
+export const addContent = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({
+        message: "Authentication required.",
+      });
+    }
+
+    const { contentType, url, title, description, body, imageUrl } = req.body;
+
+    const validContentTypes: TContentType[] = [
+      "Note",
+      "Link",
+      "Tweet",
+      "Spotify",
+      "YouTube",
+      "Reddit",
+      "Other",
+    ];
+    if (!contentType || !validContentTypes.includes(contentType)) {
+      return res.status(400).json({
+        message: "Invalid content type.",
+      });
+    }
+
+    switch (contentType) {
+      case "Note":
+        if (!body) {
+          return res.status(400).json({ message: "Note must have a body." });
+        }
+        break;
+      case "Link":
+        if (!url) {
+          return res.status(400).json({ message: "Link must have a URL." });
+        }
+        break;
+      case "Image":
+        if (!imageUrl) {
+          return res
+            .status(400)
+            .json({ message: "Image must have an image URL." });
+        }
+        break;
+    }
+
+    const newContentData: Partial<IContent> = {
+      contentType: contentType as TContentType,
+      title,
+      //@ts-ignore
+      userId,
+      isPublic: false,
+      url,
+      description,
+      body,
+      imageUrl,
+    };
+
+    const createdContent = await Content.create(newContentData);
+
+    res.status(201).json(createdContent);
+  } catch (error) {
+    console.error("Error in addContent:", error);
+    res.status(500).json({ message: "An internal server error occurred." });
+  }
+};
+
+//deleting content
+export const deleteContent = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    const contentId = req.params.id;
+
+    console.log(contentId);
+
+    if (!userId) {
+      return res.status(403).json({
+        message: "Not Authorized",
+      });
+    }
+
+    const userObjectId = new Types.ObjectId(userId);
+    const contentObjectId = new Types.ObjectId(contentId);
+
+    const deletedContent = await Content.deleteOne({
+      _id: contentObjectId,
+      userId: userObjectId,
+    });
+
+    if (!deletedContent) {
+      return res.status(404).json({
+        message: "Content not found or not authorized",
+      });
+    }
+
+    res.status(200).json({
+      message: "Content Deleted!",
+      data: deletedContent,
+    });
+  } catch (error) {
+    console.error("Error deleting content:", error);
+    res.status(500).json({
+      message:
+        "An internal server error occurred while trying to delete the content.",
+    });
+  }
+};
+
+//editing content
+export const editContent = async (req: Request, res: Response) => {};
+
+//get all content
+export const getAll = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(403).json({
+        message: "No Autho",
+      });
+    }
+
+    const userData = await Content.find({
+      userId: userId,
+    });
+
+    res.status(200).json({
+      data: userData,
+    });
+    
+  } catch (error) {
+    console.error("Error deleting content:", error);
+    res.status(500).json({
+      message:
+        "An internal server error occurred while trying to delete the content.",
+    });
   }
 };
