@@ -8,7 +8,7 @@ interface JwtPayload {
 const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const bearer_token = req.headers["authorization"];
 
-  if (!bearer_token) {
+  if (!bearer_token || !bearer_token.startsWith('Bearer ') ) {
     return res.status(403).json({
       message: "No Token provided",
     });
@@ -21,10 +21,15 @@ const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
       token,
       process.env.JWT_SECRET as string
     ) as JwtPayload;
-    (req as any).user = decoded;
+
+    req.user = { id: decoded.id}
     next();
   } catch (err) {
     return res.status(401).json({ message: "Invalid or expired token" });
+  }
+
+  if(!token){
+    console
   }
 };
 

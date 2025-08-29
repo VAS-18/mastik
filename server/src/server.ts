@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import connection_db from "./utils/db";
@@ -14,7 +14,10 @@ connection_db();
 
 //api routes
 import authRouter from "./routes/auth.routes";
-app.use("/api/v1/auth",authRouter);
+import userRouter from "./routes/user.routes";
+
+app.use("/api/v1/auth", authRouter);
+app.use("/api/v1/user", userRouter);
 
 
 //server start
