@@ -3,6 +3,7 @@ import User from "../models/user.model";
 import Content, { IContent } from "../models/content.model";
 import { TContentType } from "../types/types";
 import { Types } from "mongoose";
+import axios from "axios";
 
 //get user details (public)
 export const getUserInfo = async (req: Request, res: Response) => {
@@ -77,6 +78,10 @@ export const addContent = async (req: Request, res: Response) => {
       });
     }
 
+    let finalTitle = title;
+    let finalDescription = description;
+    let finalImageUrl = imageUrl;
+
     switch (contentType) {
       case "Note":
         if (!body) {
@@ -87,7 +92,43 @@ export const addContent = async (req: Request, res: Response) => {
         if (!url) {
           return res.status(400).json({ message: "Link must have a URL." });
         }
+
+        const urlData = await axios.post(
+          "http://localhost:3000/api/v1/metadata",
+          {
+            url: url,
+          }
+        );
+
+        console.log(urlData);
+
+        const metaData = urlData.data.data;
+
+        const urlTitle = metaData?.title || null;
+        const urlDescription = metaData?.description || null;
+        const urlImage = metaData?.image || null;
+
+        finalTitle = urlTitle || title;
+        finalDescription = urlDescription || description;
+        finalImageUrl = urlImage || imageUrl;
+
+        const newContentData: Partial<IContent> = {
+          contentType: contentType as TContentType,
+          title: finalTitle,
+          //@ts-ignore
+          userId,
+          isPublic: false,
+          url: url,
+          description: finalDescription,
+          body,
+          imageUrl: finalImageUrl,
+        };
+
+        const createdContent = await Content.create(newContentData);
+        res.status(201).json(createdContent);
+
         break;
+
       case "Image":
         if (!imageUrl) {
           return res
@@ -96,22 +137,6 @@ export const addContent = async (req: Request, res: Response) => {
         }
         break;
     }
-
-    const newContentData: Partial<IContent> = {
-      contentType: contentType as TContentType,
-      title,
-      //@ts-ignore
-      userId,
-      isPublic: false,
-      url,
-      description,
-      body,
-      imageUrl,
-    };
-
-    const createdContent = await Content.create(newContentData);
-
-    res.status(201).json(createdContent);
   } catch (error) {
     console.error("Error in addContent:", error);
     res.status(500).json({ message: "An internal server error occurred." });
@@ -181,7 +206,6 @@ export const getAll = async (req: Request, res: Response) => {
     res.status(200).json({
       data: userData,
     });
-    
   } catch (error) {
     console.error("Error deleting content:", error);
     res.status(500).json({
