@@ -31,26 +31,28 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 text-gray-900">
-      <div className="max-w-3xl mx-auto">
-        {token ? (
-          <Dashboard token={token} onSignOut={signOut} />
-        ) : view === 'sign-in' ? (
-          <div>
+    <div className="min-h-screen w-full bg-white text-gray-900 font-sans">
+      {token ? (
+        <Dashboard token={token} onSignOut={signOut} />
+      ) : view === 'sign-in' ? (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="w-full max-w-sm p-8 rounded-xl shadow bg-white">
             <SignIn onAuth={handleAuth} />
-            <div className="text-center mt-3">
-              <button onClick={() => setView('sign-up')} className="text-sm text-blue-600">Create account</button>
+            <div className="text-center mt-4">
+              <button onClick={() => setView('sign-up')} className="text-sm text-blue-600 hover:underline">Create account</button>
             </div>
           </div>
-        ) : (
-          <div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="w-full max-w-sm p-8 rounded-xl shadow bg-white">
             <SignUp onAuth={handleAuth} />
-            <div className="text-center mt-3">
-              <button onClick={() => setView('sign-in')} className="text-sm text-blue-600">Already have an account?</button>
+            <div className="text-center mt-4">
+              <button onClick={() => setView('sign-in')} className="text-sm text-blue-600 hover:underline">Already have an account?</button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -8,7 +8,9 @@ dotenv.config();
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+
+const frontendOrigin = process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173';
+app.use(cors({ origin: frontendOrigin, credentials: true }));
 
 connection_db();
 
@@ -22,8 +24,8 @@ app.use("/api/v1/user", userRouter);
 app.use("/api/v1/metadata", metadataRouter);
 
 //server start
-const port = process.env.PORT;
+const port = process.env.PORT ?? 4000;
 
 app.listen(port, () => {
-  console.log(`backend running on ${port}`);
+  console.log(`backend running on ${port} — CORS allowed for ${frontendOrigin}`);
 });

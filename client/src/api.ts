@@ -1,31 +1,48 @@
-export const API_BASE = (import.meta as any).env.VITE_API_URL ?? '/api/v1';
+import axios from 'axios';
 
-async function request(path: string, opts: RequestInit = {}) {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(opts.headers || {}),
-    },
-    ...opts,
-  });
+const envBase = (import.meta as any).env.VITE_API_URL;
+const defaultDevBase = 'http://localhost:3000/api/v1';
+export const API_BASE = envBase ?? (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? defaultDevBase : '/api/v1');
 
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
-  if (!res.ok) throw data || { message: res.statusText };
-  return data;
+if (!envBase && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+  // Informative during dev so you know where requests are going
+  // eslint-disable-next-line no-console
+  console.warn(`VITE_API_URL not set — using default backend ${defaultDevBase}. Set VITE_API_URL in client/.env to change this.`);
+}
+
+async function request(path: string, opts: any = {}) {
+  try {
+    const url = `${API_BASE}${path}`;
+    const method = opts.method || 'GET';
+    const headers = opts.headers || { 'Content-Type': 'application/json' };
+    const data = opts.body ? JSON.parse(opts.body) : undefined;
+    const res = await axios({ url, method, headers, data });
+    return res.data;
+  } catch (err: any) {
+    if (err.response) {
+      const { status, data } = err.response;
+      const message = data && typeof data === 'object' && data.message ? data.message : (typeof data === 'string' ? data : err.message);
+      throw { message, status, raw: data };
+    }
+    throw { message: err.message, status: null, raw: null };
+  }
 }
 
 export async function signIn(email: string, password: string) {
-  return request('/auth/sign-in', {
+  const data = await request('/auth/sign-in', {
     method: 'POST',
     body: JSON.stringify({ email, password }),
   });
+  if (data && (data as any).Refresh_token && !(data as any).token) {
+    (data as any).token = (data as any).Refresh_token;
+  }
+  return data;
 }
 
 export async function signUp(name: string, email: string, password: string) {
   return request('/auth/sign-up', {
     method: 'POST',
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({ username: name, email, password }),
   });
 }
 
