@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAll, getLinkMetadata, addContent } from '../api';
+import { getAll, getLinkMetadata, addContent, } from '../api';
 import { PLATFORM_LOGOS, getPlatform, getFavicon } from '../utils/platformLogos';
 
 function formatDateTime(dt?: string | Date) {
@@ -8,6 +8,14 @@ function formatDateTime(dt?: string | Date) {
 }
 
 export default function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void }) {
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+
+
+  function handleEdit(id: string) {
+    // Placeholder for edit logic (e.g., open modal)
+    setMenuOpen(null);
+    alert('Edit feature coming soon!');
+  }
   const [items, setItems] = useState<any[]>([]);
   const [url, setUrl] = useState('');
   const [meta, setMeta] = useState<any | null>(null);
@@ -44,6 +52,15 @@ export default function Dashboard({ token, onSignOut }: { token: string; onSignO
     }
   }
 
+  async function  handleDelete(id: string) {
+    try {
+      const delContent = await deleteContent(token, )
+    } catch (error) {
+      
+    }
+  }
+
+
   return (
     <div className="min-h-screen w-full bg-white">
       {/* Header */}
@@ -75,27 +92,52 @@ export default function Dashboard({ token, onSignOut }: { token: string; onSignO
             const platform = getPlatform(it.url);
             const logo = platform && PLATFORM_LOGOS[platform] ? PLATFORM_LOGOS[platform] : it.url && getFavicon(it.url) ? getFavicon(it.url) : undefined;
             return (
-              <a
+              <div
                 key={it.id || it._id}
-                href={it.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative flex flex-col p-5 rounded-xl shadow bg-white hover:shadow-md gap-3 transition cursor-pointer card mb-8 break-inside-avoid border border-gray-100"
+                className="relative flex flex-col p-5 rounded-xl shadow bg-white hover:shadow-md gap-3 transition cursor-pointer card mb-8 break-inside-avoid border border-gray-100 group"
               >
-                <div className="flex items-center justify-center w-full">
-                  {it.imageUrl || it.image ? (
-                    <img src={it.imageUrl || it.image} alt={it.title || it.name} className="w-full object-cover rounded-lg mb-2" />
-                  ) : null}
-                </div>
-                <div className="flex-1 flex flex-col min-w-0">
-                  <div className="font-semibold text-base break-words mb-2 text-gray-900">{it.title || it.name}</div>
-                  <div className="text-sm text-gray-600 break-words mb-2 line-clamp-2 max-h-12 overflow-hidden">{it.description}</div>
-                  {(it.createdAt || it.updatedAt) && (
-                    <div className="mt-auto text-right">
-                      <span className="font-medium text-xs text-gray-400">{formatDateTime(it.createdAt || it.updatedAt)}</span>
-                    </div>
-                  )}
-                </div>
+                {/* 3-dots menu button, shown on hover */}
+                <button
+                  className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/80 hover:bg-gray-100 shadow transition-opacity opacity-0 group-hover:opacity-100 z-20"
+                  onClick={() => setMenuOpen(it.id || it._id)}
+                  tabIndex={-1}
+                  aria-label="Options"
+                >
+                  <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+                    <circle cx="4" cy="10" r="2" fill="#888" />
+                    <circle cx="10" cy="10" r="2" fill="#888" />
+                    <circle cx="16" cy="10" r="2" fill="#888" />
+                  </svg>
+                </button>
+                {/* Dropdown menu */}
+                {menuOpen === (it.id || it._id) && (
+                  <div className="absolute top-12 right-4 w-32 bg-white rounded-lg shadow-lg border border-gray-100 z-30 flex flex-col text-sm">
+                    <button className="px-4 py-2 text-left hover:bg-gray-100" onClick={() => handleEdit(it.id || it._id)}>Edit</button>
+                    <button className="px-4 py-2 text-left text-red-600 hover:bg-gray-100" onClick={() => handleDelete(it.id || it._id)}>Delete</button>
+                  </div>
+                )}
+                <a
+                  href={it.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                  tabIndex={-1}
+                >
+                  <div className="flex items-center justify-center w-full">
+                    {it.imageUrl || it.image ? (
+                      <img src={it.imageUrl || it.image} alt={it.title || it.name} className="w-full object-cover rounded-lg mb-2" />
+                    ) : null}
+                  </div>
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <div className="font-semibold text-base break-words mb-2 text-gray-900">{it.title || it.name}</div>
+                    <div className="text-sm text-gray-600 break-words mb-2 line-clamp-2 max-h-12 overflow-hidden">{it.description}</div>
+                    {(it.createdAt || it.updatedAt) && (
+                      <div className="mt-auto text-right">
+                        <span className="font-medium text-xs text-gray-400">{formatDateTime(it.createdAt || it.updatedAt)}</span>
+                      </div>
+                    )}
+                  </div>
+                </a>
                 {logo && (
                   <img
                     src={logo}
@@ -104,7 +146,7 @@ export default function Dashboard({ token, onSignOut }: { token: string; onSignO
                     title={platform ? platform.charAt(0).toUpperCase() + platform.slice(1) : 'Site favicon'}
                   />
                 )}
-              </a>
+              </div>
             );
           })}
         </div>

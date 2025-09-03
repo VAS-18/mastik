@@ -3,6 +3,7 @@ import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model";
+import transporter from "../service/email.service";
 dotenv.config();
 
 //sign-Up
@@ -30,18 +31,51 @@ export const signUp = async (req: Request, res: Response) => {
 
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const newUser = await User.create({
+    const user = await User.create({
       username,
       email,
       passwordHash,
     });
 
-    newUser.save();
+    user.save();
+
+    const payload = {
+      id: user._id,
+      username: user.username,
+    };
+
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET not defined in environment variables");
+    }
+
+    const token = jwt.sign(payload, secret, { expiresIn: "7d" });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    //welcome email
+    const mailOptions = {
+      from: process.env.SENDER_EMAIL,
+      to: email,
+      subject: "Weclome to mastik",
+      text: `Welcome to mastik. Your account has been created using email-id : ${email}`,
+    };
+
+    await transporter.sendMail(mailOptions);
 
     res.status(201).json({
       message: "User Created!!!",
+      user: user
     });
-  } catch (error) {}
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error during sign up." });
+  }
 };
 
 //sign in
@@ -73,12 +107,21 @@ export const signIn = async (req: Request, res: Response) => {
     };
 
     const secret = process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error("JWT_SECRET not defined in environment variables");
+    }
+    const token = jwt.sign(payload, secret, { expiresIn: "7d" });
 
-    const token = jwt.sign(payload, secret!, { expiresIn: "1h" });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     res.status(200).json({
       message: "Signed in successfully",
-      Refresh_token: token,
+      token: token,
       user: {
         id: user._id,
         username: user.username,
@@ -90,3 +133,34 @@ export const signIn = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Server error during sign in." });
   }
 };
+
+//logout
+export const logout = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      message: "logged out!",
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error during logout." });
+  }
+};
+
+//verifyOTP
+// export const sendVerifyOTP = async(req: Request, res: Response) => {
+//   try {
+//     const userId = req.user?.id;
+
+//     const found = User.findById(userId);
+
+//   } catch (error) {
+    
+//   }
+// }

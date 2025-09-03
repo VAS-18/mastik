@@ -4,6 +4,7 @@ import Content, { IContent } from "../models/content.model";
 import { TContentType } from "../types/types";
 import { Types } from "mongoose";
 import axios from "axios";
+import { parse } from 'tldts';
 
 //get user details (public)
 export const getUserInfo = async (req: Request, res: Response) => {
@@ -65,12 +66,7 @@ export const addContent = async (req: Request, res: Response) => {
 
     const validContentTypes: TContentType[] = [
       "Note",
-      "Link",
-      "Tweet",
-      "Spotify",
-      "YouTube",
-      "Reddit",
-      "Other",
+      "Link"
     ];
     if (!contentType || !validContentTypes.includes(contentType)) {
       return res.status(400).json({
@@ -103,7 +99,8 @@ export const addContent = async (req: Request, res: Response) => {
         console.log(urlData);
 
         const metaData = urlData.data.data;
-
+        const parsed = parse(url).domain;
+        const urlProvider = parsed?.split('.')[0];
         const urlTitle = metaData?.title || null;
         const urlDescription = metaData?.description || null;
         const urlImage = metaData?.image || null;
@@ -119,6 +116,7 @@ export const addContent = async (req: Request, res: Response) => {
           userId,
           isPublic: false,
           url: url,
+          platform : urlProvider,
           description: finalDescription,
           body,
           imageUrl: finalImageUrl,

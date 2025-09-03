@@ -20,10 +20,9 @@ const contentSchema: Schema = new Schema(
   {
     contentType: {
       type: String,
-      enum: ["Note", "Link", "Tweet", "Spotify", "YouTube", "Reddit", "Other"],
+      enum: ["Note", "Link"],
       required: true,
     },
-
     title: {
       type: String,
       required: true,
@@ -47,7 +46,9 @@ const contentSchema: Schema = new Schema(
         unique: true,
         default: () => v4()
     },
-
+    platform : {
+      type : String
+    },
     url: {
       type: String,
     },

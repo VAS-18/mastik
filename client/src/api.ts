@@ -74,3 +74,11 @@ export async function addContent(token: string, payload: any) {
     body: JSON.stringify(payload),
   });
 }
+
+export async function deleteContent(token: string, payload: any) {
+  return request('/user/delete', {
+    method: 'POST',
+    headers: {Authorization: `Bearer ${token}`},
+    body: JSON.stringify(payload)
+  })
+}
