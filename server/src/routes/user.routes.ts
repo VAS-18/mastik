@@ -6,6 +6,7 @@ import {
   getAll,
   getMe,
   getUserInfo,
+  search,
 } from "../controller/user.controller";
 
 const userRouter = Router();
@@ -31,6 +32,9 @@ userRouter.delete("/delete/:id", authMiddleware, deleteContent);
 
 //update content
 userRouter.patch("/edit", authMiddleware);
+
+//search route
+userRouter.post("/search", authMiddleware, search);
 
 //public routes
 userRouter.get("/me", getUserInfo);

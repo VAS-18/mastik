@@ -4,7 +4,7 @@ import Content, { IContent } from "../models/content.model";
 import { TContentType } from "../types/types";
 import { Types } from "mongoose";
 import axios from "axios";
-import { parse } from 'tldts';
+import { parse } from "tldts";
 
 //get user details (public)
 export const getUserInfo = async (req: Request, res: Response) => {
@@ -64,10 +64,7 @@ export const addContent = async (req: Request, res: Response) => {
 
     const { contentType, url, title, description, body, imageUrl } = req.body;
 
-    const validContentTypes: TContentType[] = [
-      "Note",
-      "Link"
-    ];
+    const validContentTypes: TContentType[] = ["Note", "Link"];
     if (!contentType || !validContentTypes.includes(contentType)) {
       return res.status(400).json({
         message: "Invalid content type.",
@@ -95,12 +92,25 @@ export const addContent = async (req: Request, res: Response) => {
             url: url,
           }
         );
+        const embeddingsRes = await axios.post("http://localhost:8000/scrape", {
+          req_url: url,
+        });
+
+        const { text, embeddings } = embeddingsRes.data;
+
+        if (!text || !embeddings) {
+          return res
+            .status(500)
+            .json({ message: "Failed to scrape or embed content." });
+        }
+
+        console.log(embeddings);
 
         console.log(urlData);
 
         const metaData = urlData.data.data;
         const parsed = parse(url).domain;
-        const urlProvider = parsed?.split('.')[0];
+        const urlProvider = parsed?.split(".")[0];
         const urlTitle = metaData?.title || null;
         const urlDescription = metaData?.description || null;
         const urlImage = metaData?.image || null;
@@ -115,15 +125,17 @@ export const addContent = async (req: Request, res: Response) => {
           //@ts-ignore
           userId,
           isPublic: false,
+          vectorEmbedding: embeddings,
           url: url,
-          platform : urlProvider,
+          platform: urlProvider,
           description: finalDescription,
           body,
           imageUrl: finalImageUrl,
         };
 
         const createdContent = await Content.create(newContentData);
-        res.status(201).json(createdContent);
+
+        res.status(201).json({ content: createdContent });
 
         break;
 
@@ -209,6 +221,52 @@ export const getAll = async (req: Request, res: Response) => {
     res.status(500).json({
       message:
         "An internal server error occurred while trying to delete the content.",
+    });
+  }
+};
+
+
+//search 
+export const search = async (req: Request, res: Response) => {
+  const { query } = req.body;
+
+  if (!query) {
+    return res.status(400).json({
+      message: "No search query found",
+    });
+  }
+
+  try {
+    const queryResponse = await axios.post(
+      "http://localhost:8000/embed",
+      { query },
+      { headers: { "Content-Type": "application/json" } }
+    );
+
+    const embeddingVector = queryResponse.data.embedding;
+
+    const pipeline = [
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          queryVector: embeddingVector,
+          path: "vectorEmbedding",
+          limit: 2,
+          numCandidates: 5,
+        },
+      },
+    ];
+
+    const results = await Content.aggregate(pipeline);
+
+    return res.status(200).json({
+      search: results,
+    });
+  } catch (error: any) {
+    console.error("Error:", error.response || error.message);
+    res.status(500).json({
+      message:
+        "An internal server error occurred while trying to embed search query.",
     });
   }
 };
