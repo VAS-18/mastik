@@ -1,23 +1,9 @@
-import mongoose, { Schema, Types } from "mongoose";
-import { TContentType } from "../types/types";
+import mongoose, { Schema } from "mongoose";
+import { IContent} from "../types/types";
 import { v4 as v4 } from "uuid";
 
-export interface IContent extends Document {
-  contentType: TContentType;
-  title: string;
-  vectorEmbedding?: number[];
-  userId: Types.ObjectId;
-  isPublic: boolean;
-  shareId: string;
-  platform?: string;
-  url?: string;
-  description?: string;
-  imageUrl?: string;
-  scrapeStatus: "pending" | "processing" | "done" | "failed";
-  createdAt: Date;
-  updatedAt: Date;
-}
 
+//schema for content
 const contentSchema = new Schema<IContent>(
   {
     contentType: {

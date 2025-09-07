@@ -6,9 +6,10 @@ import connection_db from "./utils/db";
 
 dotenv.config();
 
+//express app initialization
 const app = express();
 
-
+//express middlewares
 app.use(cookieParser());
 app.use(cors({ origin: '*', credentials: true }));
 
@@ -21,9 +22,11 @@ import authRouter from "./routes/auth.routes";
 import userRouter from "./routes/user.routes";
 import metadataRouter from "./routes/metadata.routes";
 
-
+//auth route 
 app.use("/api/v1/auth", authRouter);
+//user routes
 app.use("/api/v1/user", userRouter);
+//route to getmeta data
 app.use("/api/v1/metadata", metadataRouter);
 
 //server start

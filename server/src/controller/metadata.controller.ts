@@ -65,6 +65,7 @@ export const getLinkMetadata = async (req: Request, res: Response) => {
   }
 };
 
+//function to fetch metadata from reddit 
 const fetchFromReddit = async (url: string) => {
   const redditUrl = url.endsWith("/") ? `${url}.json` : `${url}/.json`;
   const { data } = await axios.get(redditUrl, {
@@ -94,6 +95,8 @@ const fetchFromReddit = async (url: string) => {
   };
 };
 
+
+//function to fetch metadata from twitter (not working currently)
 const fetchFromTwitter = async (url: string) => {
   try {
     const tweetId = url.split("/")[5];
@@ -117,3 +120,5 @@ const fetchFromTwitter = async (url: string) => {
     console.error(`Something went wrong while fetching X meta data ${error}`);
   }
 };
+
+

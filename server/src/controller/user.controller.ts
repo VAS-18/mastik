@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
 import User from "../models/user.model";
-import Content, { IContent } from "../models/content.model";
-import { TContentType } from "../types/types";
+import Content from "../models/content.model";
+import { IContent, TContentType } from "../types/types";
 import { Types } from "mongoose";
 import axios from "axios";
 import { parse } from "tldts";
+
 
 //get user details (public)
 export const getUserInfo = async (req: Request, res: Response) => {
@@ -49,7 +50,7 @@ export const getMe = async (req: Request, res: Response) => {
   }
 };
 
-//User Actions: Adding, Deleting, Share etc
+//User Actions: Adding, Deleting, Share, Search etc
 
 //adding content
 export const addContent = async (req: Request, res: Response) => {
@@ -224,7 +225,6 @@ export const getAll = async (req: Request, res: Response) => {
     });
   }
 };
-
 
 //search 
 export const search = async (req: Request, res: Response) => {

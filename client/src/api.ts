@@ -1,48 +1,75 @@
 import axios from 'axios';
+import type { AxiosRequestConfig } from 'axios';
 
+// Base URL config
 const envBase = (import.meta as any).env.VITE_API_URL;
 const defaultDevBase = 'http://localhost:3000/api/v1';
-export const API_BASE = envBase ?? (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? defaultDevBase : '/api/v1');
+export const API_BASE =
+  envBase ??
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
+    ? defaultDevBase
+    : '/api/v1');
 
 if (!envBase && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-  // Informative during dev so you know where requests are going
-  // eslint-disable-next-line no-console
-  console.warn(`VITE_API_URL not set — using default backend ${defaultDevBase}. Set VITE_API_URL in client/.env to change this.`);
+  console.warn(
+    `VITE_API_URL not set — using default backend ${defaultDevBase}. Set VITE_API_URL in client/.env`
+  );
 }
 
-async function request(path: string, opts: any = {}) {
+// Typed options for request
+interface RequestOptions {
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  headers?: Record<string, string>;
+  body?: Record<string, any>;
+}
+
+// Central request function
+async function request(path: string, opts: RequestOptions = {}) {
   try {
     const url = `${API_BASE}${path}`;
-    const method = opts.method || 'GET';
-    const headers = opts.headers || { 'Content-Type': 'application/json' };
-    const data = opts.body ? JSON.parse(opts.body) : undefined;
-    const res = await axios({ url, method, headers, data });
+    const config: AxiosRequestConfig = {
+      url,
+      method: opts.method || 'GET',
+      headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+      data: opts.body,
+    };
+
+    const res = await axios(config);
     return res.data;
   } catch (err: any) {
     if (err.response) {
       const { status, data } = err.response;
-      const message = data && typeof data === 'object' && data.message ? data.message : (typeof data === 'string' ? data : err.message);
+      const message =
+        data && typeof data === 'object' && data.message
+          ? data.message
+          : typeof data === 'string'
+          ? data
+          : err.message;
       throw { message, status, raw: data };
     }
     throw { message: err.message, status: null, raw: null };
   }
 }
 
+// API methods
+
 export async function signIn(email: string, password: string) {
   const data = await request('/auth/sign-in', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: { email, password },
   });
-  if (data && (data as any).Refresh_token && !(data as any).token) {
-    (data as any).token = (data as any).Refresh_token;
+
+  if (data.Refresh_token && !data.token) {
+    data.token = data.Refresh_token;
   }
+
   return data;
 }
 
 export async function signUp(name: string, email: string, password: string) {
   return request('/auth/sign-up', {
     method: 'POST',
-    body: JSON.stringify({ username: name, email, password }),
+    body: { username: name, email, password },
   });
 }
 
@@ -63,22 +90,30 @@ export async function getAll(token: string) {
 export async function getLinkMetadata(url: string) {
   return request('/metadata', {
     method: 'POST',
-    body: JSON.stringify({ url }),
+    body: { url },
   });
 }
 
-export async function addContent(token: string, payload: any) {
+export async function addContent(token: string, payload: Record<string, any>) {
   return request('/user/add', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(payload),
+    body: payload,
   });
 }
 
-export async function deleteContent(token: string, payload: any) {
+export async function deleteContent(token: string, payload: Record<string, any>) {
   return request('/user/delete', {
     method: 'POST',
-    headers: {Authorization: `Bearer ${token}`},
-    body: JSON.stringify(payload)
-  })
+    headers: { Authorization: `Bearer ${token}` },
+    body: payload,
+  });
+}
+
+export async function searchContent(token: string, query: string) {
+  return request('/user/search', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: { query },
+  });
 }

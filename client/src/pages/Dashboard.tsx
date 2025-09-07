@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
-import { getAll, getLinkMetadata, addContent} from '../api';
+import { useEffect, useState, useCallback } from 'react';
+import { getAll, getLinkMetadata, addContent, searchContent } from '../api';
 import BookmarkCard from '../components/BookmarkCard';
+import { debounce } from 'lodash';
 
 export default function Dashboard({ token, onSignOut }: { token: string; onSignOut: () => void }) {
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -19,16 +20,49 @@ export default function Dashboard({ token, onSignOut }: { token: string; onSignO
   }
 
   const [items, setItems] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [url, setUrl] = useState('');
   const [meta, setMeta] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
-  useEffect(() => {
+  const fetchAllItems = useCallback(() => {
     if (!token) return;
     getAll(token)
       .then((d) => setItems(Array.isArray(d) ? d : Array.isArray(d?.data) ? d.data : []))
       .catch((err) => setError(err?.message || 'Failed to load items'));
   }, [token]);
+
+  useEffect(() => {
+    fetchAllItems();
+  }, [fetchAllItems]);
+
+  const debouncedSearch = useCallback(
+    debounce(async (query: string) => {
+      if (!query.trim()) {
+        fetchAllItems();
+        setIsSearching(false);
+        return;
+      }
+      try {
+        setIsSearching(true);
+        const results = await searchContent(token, query);
+        setItems(results.search || []);
+      } catch (err: any) {
+        setError(err?.message || 'Failed to search');
+      } finally {
+        setIsSearching(false);
+      }
+    }, 500),
+    [token, fetchAllItems]
+  );
+
+  useEffect(() => {
+    debouncedSearch(searchQuery);
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [searchQuery, debouncedSearch]);
 
   async function preview() {
     try {
@@ -46,7 +80,7 @@ export default function Dashboard({ token, onSignOut }: { token: string; onSignO
         contentType: 'Link',
         url: meta.url,
       });
-      setItems((s) => [created, ...s]);
+      setItems((s) => [created.content, ...s]);
       setUrl('');
       setMeta(null);
     } catch (err: any) {
@@ -81,7 +115,17 @@ export default function Dashboard({ token, onSignOut }: { token: string; onSignO
       {/* Main Content */}
       <main className="w-full px-8 pb-12">
         {error && <div className="text-red-600 mb-4">{error}</div>}
-        {items.length === 0 && <div className="text-gray-400 text-lg">No bookmarks yet</div>}
+        <div className="w-full max-w-2xl mx-auto my-8">
+          <input
+            type="text"
+            placeholder="Search bookmarks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full p-3 rounded-lg border border-gray-200 bg-gray-50 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+        </div>
+        {isSearching && <div className="text-gray-400 text-lg w-full text-center">Searching...</div>}
+        {!isSearching && items.length === 0 && <div className="text-gray-400 text-lg w-full text-center">No bookmarks found</div>}
         <div className="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-8 w-full">
           {items.map((it) => (
             <BookmarkCard

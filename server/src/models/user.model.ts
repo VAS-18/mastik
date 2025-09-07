@@ -1,13 +1,7 @@
-import mongoose, { Schema, Document } from "mongoose";
-
-export interface IUser extends Document {
-  username: string;
-  email: string;
-  passwordHash: string;
-}
+import mongoose, { Schema } from "mongoose";
+import { IUser } from "../types/types";
 
 //user schema
-
 const UserSchema: Schema = new mongoose.Schema(
   {
     username: {
