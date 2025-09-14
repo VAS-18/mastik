@@ -9,20 +9,24 @@ dotenv.config();
 //express app initialization
 const app = express();
 
+//frontend url
+const frontendUrl = process.env.FRONTEND_ORIGIN;
+
 //express middlewares
 app.use(cookieParser());
-app.use(cors({ origin: '*', credentials: true }));
+app.use(cors({ origin: frontendUrl, credentials: true }));
 
 //db connection
 connection_db();
 
 app.use(express.json());
+
 //api routes
 import authRouter from "./routes/auth.routes";
 import userRouter from "./routes/user.routes";
 import metadataRouter from "./routes/metadata.routes";
 
-//auth route 
+//auth route
 app.use("/api/v1/auth", authRouter);
 //user routes
 app.use("/api/v1/user", userRouter);
@@ -33,7 +37,5 @@ app.use("/api/v1/metadata", metadataRouter);
 const port = process.env.PORT ?? 4000;
 
 app.listen(port, () => {
-  console.log(
-    `backend running on ${port}`
-  );
+  console.log(`backend running on ${port}`);
 });

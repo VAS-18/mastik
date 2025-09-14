@@ -6,7 +6,6 @@ import { Types } from "mongoose";
 import axios from "axios";
 import { parse } from "tldts";
 
-
 //get user details (public)
 export const getUserInfo = async (req: Request, res: Response) => {
   const { username } = req.body;
@@ -212,7 +211,7 @@ export const getAll = async (req: Request, res: Response) => {
 
     const userData = await Content.find({
       userId: userId,
-    });
+    }).select("-vectorEmbedding -userId -scrapeStatus -__v");
 
     res.status(200).json({
       data: userData,
@@ -226,10 +225,9 @@ export const getAll = async (req: Request, res: Response) => {
   }
 };
 
-//search 
+//search
 export const search = async (req: Request, res: Response) => {
   const { query } = req.body;
-
   if (!query) {
     return res.status(400).json({
       message: "No search query found",

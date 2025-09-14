@@ -1,41 +1,77 @@
-import { useState } from 'react';
-import { signIn } from '../api';
+import { Button } from "@/components/ui/button";
+import AppContext from "../context/appContext";
+import { useContext, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { API } from "@/lib/api";
 
-export default function SignIn({ onAuth }: { onAuth: (token: string) => void }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+function SignIn() {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
-  async function submit(e: React.FormEvent) {
+  const ctx = useContext(AppContext);
+  if (!ctx) throw new Error("AppContext must be used within an AppProvider");
+  const { setUser, setIsLoggedIn, backendUrl } = ctx;
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      const data = await signIn(email, password);
-      onAuth(data.token);
+      const url = `${backendUrl}/auth/sign-in`;
+
+      const { data } = await API.post(
+        url,
+        { email, password },
+        { withCredentials: true }
+      );
+
+      if (data?.user) {
+        setUser(data.user.username);
+        setIsLoggedIn(true);
+        navigate("/dashboard");
+      } else {
+        setError(data?.message || "Signed in but no user info returned.");
+      }
     } catch (err: any) {
-      setError(err?.message || 'Failed to sign in');
+      if (err.response) {
+        setError(err.response.data?.message || `Error: ${err.response.status}`);
+      } else if (err.request) {
+        setError("No response from server. Please try again.");
+      } else {
+        setError(err.message || "Something went wrong.");
+      }
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Sign in</h2>
-      <form onSubmit={submit} className="space-y-3">
+    <div>
+      <h1 className="bg-red-500 font-extrabold">Sign In</h1>
+      <form onSubmit={handleSubmit}>
         <input
-          className="w-full p-2 border rounded"
+          type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <input
-          className="w-full p-2 border rounded"
-          placeholder="Password"
           type="password"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <div className="text-red-600">{error}</div>}
-        <button className="px-4 py-2 bg-blue-600 text-white rounded">Sign in</button>
+        <Button variant={"ghost"} type="submit">
+          Sign in
+        </Button>
       </form>
+      <p>
+        Don't have an account? <Link to="/signup">Sign Up</Link>
+      </p>
     </div>
   );
 }
+
+export default SignIn;
