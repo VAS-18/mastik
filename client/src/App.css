@@ -1,9 +1,21 @@
+@font-face {
+  font-family: Panchang;
+  src: url(./assets/fonts/Panchang-Variable.woff2);
+}
+
+@font-face {
+  font-family: Cabinet-Grotesk;
+  src: url(./assets/fonts/CabinetGrotesk-Variable.woff2);
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-panchang: Panchang, "sans-serif";
+  --font-cabinet: Cabinet-Grotesk, "sans-serif";
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);

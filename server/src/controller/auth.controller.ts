@@ -89,7 +89,7 @@ export const signIn = async (req: Request, res: Response) => {
 
     if (!user) {
       return res.status(400).json({
-        message: "Invalid Creds",
+        message: "User not found",
       });
     }
 
@@ -97,7 +97,7 @@ export const signIn = async (req: Request, res: Response) => {
 
     if (!isMatch) {
       return res.status(400).json({
-        message: "Invalid Creds",
+        message: "Invalid Credentials, Please verify your email or password",
       });
     }
 
