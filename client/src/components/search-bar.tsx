@@ -23,7 +23,7 @@ const SearchBar = ({ onSearch }: SearchBarProps) => {
         placeholder="Search..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        className="relative border rounded-l-md p-2 "
+        className="relative border rounded-l-md p-2 text-white focus:outline-none bg-gray-900/40 w-80 border-gray-700/10"
       />
     </form>
   );

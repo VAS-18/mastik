@@ -7,13 +7,16 @@ import { Squares } from "@/components/ui/squares-background";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 
 function SignIn() {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
@@ -23,7 +26,6 @@ function SignIn() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
 
     const url = `${backendUrl}/auth/sign-in`;
@@ -43,7 +45,8 @@ function SignIn() {
       },
       error: (err) => {
         return (
-          err?.response?.data?.message || err?.message ||
+          err?.response?.data?.message ||
+          err?.message ||
           "Unable to sign in. Please try again."
         );
       },
@@ -61,11 +64,10 @@ function SignIn() {
         }, 1500);
       } else {
         const msg = data?.message || "Signed in but no user info returned.";
-        setError(msg);
       }
     } catch (err: any) {
-      const msg = err?.response?.data?.message || err?.message || "Something went wrong.";
-      setError(msg);
+      const msg =
+        err?.response?.data?.message || err?.message || "Something went wrong.";
     } finally {
       setLoading(false);
     }
@@ -82,31 +84,29 @@ function SignIn() {
         aria-hidden="true"
         className="absolute inset-0 -z-10 pointer-events-none"
       />
-
       <div className="relative z-10 w-full max-w-md mx-4">
-        <div className="bg-white backdrop-blur-sm rounded-2xl shadow-xl p-8">
-          <h1 className="text-2xl font-extrabold mb-4 text-gray-900">
-            Welcome Back
+        <div className="absolute rounded-2xl backdrop-blur-sm inset-0 -z-20 pointer-events-none [background:radial-gradient(145%_140%_at_50%_90%,rgba(0,0,0,0)_45%,#6633ee_130%)]" />
+        <div className="bg-gray-700/10  rounded-2xl shadow-xl p-10 border border-gray-100/5 drop-shadow-xl">
+          <h1 className="text-2xl flex justify-center font-semibold font-panchang mb-10 text-gray-300">
+            Welcome back
           </h1>
 
-          {error && (
-            <div className="mb-4 text-sm text-red-700 bg-red-100 px-3 py-2 rounded">
-              {error}
-            </div>
-          )}
+          <span className=" text-gray-600 mb-6 flex justify-center font-cabinet font-semibold">
+            Login with your email and password
+          </span>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            <label className="text-sm font-medium">Email</label>
+            {/* <label className="text-sm font-semibold font-cabinet text-gray-300">Email</label> */}
             <Input
               type="email"
-              placeholder="something@justlike.this"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              className="w-full p-4 py-3 font-cabinet font-bold rounded-md text-gray-300 border border-gray-800 focus:outline-none bg-gray-900/40"
               required
             />
 
-            <label className="text-sm font-medium">Password</label>
+            {/* <label className="text-sm text-gray-300 font-cabinet font-semibold">Password</label> */}
 
             <div className="relative">
               <Input
@@ -114,7 +114,7 @@ function SignIn() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-md border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 pr-12"
+                className="w-full px-4 py-3 font-cabinet font-bold rounded-md text-gray-300 border border-gray-800 focus:outline-none pr-12 bg-gray-900/40"
                 required
                 aria-label="Password"
               />
@@ -124,10 +124,12 @@ function SignIn() {
                   <TooltipTrigger asChild>
                     <button
                       type="button"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                       aria-pressed={showPassword}
                       onClick={() => setShowPassword((s) => !s)}
-                      className="inline-flex items-center justify-center p-1 text-gray-600 hover:text-gray-900"
+                      className="inline-flex items-center justify-center p-1 text-gray-600 hover:text-gray-600"
                     >
                       {showPassword ? (
                         <EyeOff className="w-5 h-5" />
@@ -146,16 +148,38 @@ function SignIn() {
             <Button
               type="submit"
               variant={"default"}
-              className="w-full flex items-center justify-center cursor-pointer"
+              className="w-full flex items-center justify-center cursor-pointer bg-gray-300/5 hover:bg-gray-300/10 text-gray-300 font-cabinet font-bold py-3 rounded-md transition disabled:cursor-not-allowed disabled:opacity-50"
               disabled={loading}
             >
               {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
 
-          <p className="mt-4 text-sm text-gray-700">
-            Don't have an account?{' '}
-            <Link to="/signup" className="text-indigo-600 hover:underline">
+          <div className="flex items-center gap-4 my-4">
+            <hr className="flex-1 border-t border-gray-700/30" />
+            <span className="text-gray-600 px-2">or</span>
+            <hr className="flex-1 border-t border-gray-700/30" />
+          </div>
+
+          <div className="flex gap-4">
+            <Button
+              className="bg-gray-300/5 flex-1 font-cabinet hover:bg-gray-300/10 "
+              variant={"default"}
+            >
+              Google
+            </Button>
+
+            <Button
+              className="bg-gray-300/5 flex-1 font-cabinet hover:bg-gray-300/10"
+              variant={"default"}
+            >
+              Google
+            </Button>
+          </div>
+
+          <p className="mt-4 text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-gray-300/60 hover:underline">
               Sign Up
             </Link>
           </p>
